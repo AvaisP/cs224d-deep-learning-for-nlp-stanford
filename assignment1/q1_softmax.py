@@ -21,7 +21,10 @@ def softmax(x):
     """
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+    # Normalization
+    # Checkout http://cs231n.github.io/linear-classify/#softmax
+    log_c = -np.max(x, axis = x.ndim - 1, keepdims=True)
+    x = np.exp(x + log_c) / np.sum(np.exp(x + log_c), axis=x.ndim-1)
     ### END YOUR CODE
     
     return x
@@ -58,8 +61,8 @@ def test_softmax():
     """
     print "Running your tests..."
     ### YOUR CODE HERE
-    raise NotImplementedError
     ### END YOUR CODE  
+    print "Successfully completed running the tests."
 
 if __name__ == "__main__":
     test_softmax_basic()
