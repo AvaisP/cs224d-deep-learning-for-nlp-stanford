@@ -24,7 +24,7 @@ def softmax(x):
     # Normalization
     # Checkout http://cs231n.github.io/linear-classify/#softmax
     log_c = -np.max(x, axis = x.ndim - 1, keepdims=True)
-    x = np.exp(x + log_c) / np.sum(np.exp(x + log_c), axis=x.ndim-1)
+    x = np.exp(x + log_c) / np.sum(np.exp(x + log_c), axis=x.ndim-1, keepdims=True)
     ### END YOUR CODE
     
     return x
