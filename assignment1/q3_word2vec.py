@@ -50,7 +50,17 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
     # assignment!                                                  
     
     ### YOUR CODE HERE
-    raise NotImplementedError
+    #print outputVectors.shape
+    prob_of_each = softmax(np.dot(outputVectors, predicted))
+    #print prob_of_each
+    cost = -np.log(prob_of_each[target])
+    #print prob_of_each.shape
+    print outputVectors.shape
+    prob_of_each[target] -= 1
+    gradPred = np.dot(outputVectors.T,prob_of_each.reshape(prob_of_each.shape[0], 1))
+    print gradPred.shape
+    grad = prob_of_each.reshape(prob_of_each.shape[0],1) * predicted.reshape(
+                                            1, predicted.shape[0])
     ### END YOUR CODE
     
     return cost, gradPred, grad
