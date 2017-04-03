@@ -21,9 +21,12 @@ def getSentenceFeature(tokens, wordVectors, sentence):
     # - sentVector: feature vector for the sentence    
     
     sentVector = np.zeros((wordVectors.shape[1],))
-    
     ### YOUR CODE HERE
-    raise NotImplementedError
+    for word in sentence:
+        idx = tokens[word]
+        vec = wordVectors[idx]
+        sentVector += vec
+    sentVector /= len(sentence)
     ### END YOUR CODE
     
     return sentVector
