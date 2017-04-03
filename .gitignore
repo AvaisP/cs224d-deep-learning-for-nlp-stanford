@@ -1,1 +1,3 @@
 *.pyc
+datasets/
+saved_params_*.npy
