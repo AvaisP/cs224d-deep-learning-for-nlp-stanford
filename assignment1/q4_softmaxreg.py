@@ -58,7 +58,11 @@ def softmaxRegression(features, labels, weights, regularization = 0.0, nopredict
     cost += 0.5 * regularization * np.sum(weights ** 2)
     
     ### YOUR CODE HERE: compute the gradients and predictions
-    raise NotImplementedError
+    pred=np.argmax(prob, axis=1)
+    one_hot = np.zeros_like(prob)
+    one_hot[range(N), labels] = 1
+
+    grad = 1.0 / N * np.dot(features.T, prob - one_hot) + regularization * weights
     ### END YOUR CODE
     
     if nopredictions:
