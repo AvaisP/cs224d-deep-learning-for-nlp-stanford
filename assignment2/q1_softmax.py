@@ -22,7 +22,11 @@ def softmax(x):
   """
 
   ### YOUR CODE HERE
-  raise NotImplementedError
+  log_c = -tf.reduce_max(x, axis = x.get_shape().ndims - 1, keep_dims=True)
+  out = tf.exp(x + log_c) / tf.reduce_sum(tf.exp(x + log_c), axis = 
+                  x.get_shape().ndims - 1, keep_dims=True) 
+  with tf.Session() as sess:
+    print sess.run(out)
   ### END YOUR CODE
   
   return out 
