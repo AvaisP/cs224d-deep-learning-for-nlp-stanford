@@ -22,11 +22,11 @@ class Config(object):
   batch_size = 64
   label_size = 5
   hidden_size = 100
-  max_epochs = 24 
+  max_epochs = 24
   early_stopping = 2
   dropout = 0.9
   lr = 0.001
-  l2 = 0.001
+  l2 = 0.0001
   window_size = 3
 
 class NERModel(LanguageModel):
@@ -94,7 +94,8 @@ class NERModel(LanguageModel):
     ### YOUR CODE HERE
     self.input_placeholder = tf.placeholder(tf.int32, shape=(None, self.config.window_size))
     self.labels_placeholder = tf.placeholder(tf.float32, shape=(None, self.config.label_size))
-    self.dropout_placeholder = tf.placeholder(tf.float32, shape=())
+    # probability to keep units  == keeppros param
+    self.dropout_placeholder = tf.placeholder(tf.float32)
     ### END YOUR CODE
 
   def create_feed_dict(self, input_batch, dropout, label_batch=None):
@@ -120,9 +121,11 @@ class NERModel(LanguageModel):
     """
     ### YOUR CODE HERE
     feed_dict = {
-      self.input_placeholder  : input_batch,
-      self.labels_placeholder : label_batch
+      self.input_placeholder   : input_batch,
+      self.dropout_placeholder : dropout
     }
+    if label_batch is not None:
+      feed_dict[self.labels_placeholder] = label_batch
     ### END YOUR CODE
     return feed_dict
 
@@ -157,7 +160,7 @@ class NERModel(LanguageModel):
       window = tf.reshape(tf.nn.embedding_lookup(
                     params=self.embeddings, 
                     ids=self.input_placeholder), 
-                  (-1, window_size*embed_size)
+                  (-1, self.config.window_size*self.config.embed_size)
                 )
       ### END YOUR CODE
       return window
@@ -190,11 +193,22 @@ class NERModel(LanguageModel):
       output: tf.Tensor of shape (batch_size, label_size)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    with tf.variable_scope("hidden", initializer=xavier_weight_init()):
+      self.W  = tf.get_variable("weights1", [self.config.window_size * self.config.embed_size, self.config.hidden_size])
+      self.b1 = tf.get_variable("biases1", [self.config.hidden_size])
+    with tf.variable_scope("hidden", initializer=xavier_weight_init()):
+      self.U  = tf.get_variable("weights2", [self.config.hidden_size, self.config.label_size])
+      self.b2 = tf.get_variable("biases2", [self.config.label_size])
+    reg_loss = tf.reduce_sum(tf.square(self.W)) + tf.reduce_sum(tf.square(self.U)) + tf.reduce_sum(tf.square(self.b1)) + tf.reduce_sum(tf.square(self.b2))
+    tf.add_to_collection("total_loss", reg_loss)
+    hidden_activation = tf.nn.tanh(tf.matmul(tf.to_float(window), self.W) + self.b1)
+    # checkout https://github.com/aymericdamien/TensorFlow-Examples/blob/master/examples/3_NeuralNetworks/convolutional_network.py
+    # for an example with dropout
+    output = tf.matmul(tf.nn.dropout(hidden_activation, self.dropout_placeholder), self.U) + self.b2
     ### END YOUR CODE
     return output 
 
-  def add_loss_op(self, y):
+  def add_loss_op(self, pred):
     """Adds cross_entropy_loss ops to the computational graph.
 
     Hint: You can use tf.nn.softmax_cross_entropy_with_logits to simplify your
@@ -205,7 +219,8 @@ class NERModel(LanguageModel):
       loss: A 0-d tensor (scalar)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=self.labels_placeholder))
+    loss += self.config.l2 * tf.get_collection("total_loss")[0]
     ### END YOUR CODE
     return loss
 
@@ -229,7 +244,7 @@ class NERModel(LanguageModel):
       train_op: The Op for training.
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    train_op = tf.train.AdamOptimizer(self.config.lr).minimize(loss)
     ### END YOUR CODE
     return train_op
 
