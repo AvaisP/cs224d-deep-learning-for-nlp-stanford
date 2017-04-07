@@ -201,7 +201,7 @@ class NERModel(LanguageModel):
       self.b2 = tf.get_variable("biases2", [self.config.label_size])
     reg_loss = tf.reduce_sum(tf.square(self.W)) + tf.reduce_sum(tf.square(self.U)) + tf.reduce_sum(tf.square(self.b1)) + tf.reduce_sum(tf.square(self.b2))
     tf.add_to_collection("total_loss", reg_loss)
-    hidden_activation = tf.nn.tanh(tf.matmul(tf.to_float(window), self.W) + self.b1)
+    hidden_activation = tf.nn.sigmoid(tf.matmul(tf.to_float(window), self.W) + self.b1)
     # checkout https://github.com/aymericdamien/TensorFlow-Examples/blob/master/examples/3_NeuralNetworks/convolutional_network.py
     # for an example with dropout
     output = tf.matmul(tf.nn.dropout(hidden_activation, self.dropout_placeholder), self.U) + self.b2
