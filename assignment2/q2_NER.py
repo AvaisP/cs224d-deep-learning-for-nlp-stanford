@@ -92,7 +92,9 @@ class NERModel(LanguageModel):
     (Don't change the variable names)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    self.input_placeholder = tf.placeholder(tf.int32, shape=(None, self.config.window_size))
+    self.labels_placeholder = tf.placeholder(tf.float32, shape=(None, self.config.label_size))
+    self.dropout_placeholder = tf.placeholder(tf.float32, shape=())
     ### END YOUR CODE
 
   def create_feed_dict(self, input_batch, dropout, label_batch=None):
@@ -117,7 +119,10 @@ class NERModel(LanguageModel):
       feed_dict: The feed dictionary mapping from placeholders to values.
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    feed_dict = {
+      self.input_placeholder  : input_batch,
+      self.labels_placeholder : label_batch
+    }
     ### END YOUR CODE
     return feed_dict
 
