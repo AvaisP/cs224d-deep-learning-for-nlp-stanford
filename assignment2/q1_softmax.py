@@ -54,7 +54,9 @@ def cross_entropy_loss(y, yhat):
           tensor in the problem.
   """
   ### YOUR CODE HERE
-  raise NotImplementedError
+  out = -tf.reduce_sum(tf.to_float(y) * tf.log(yhat))
+  with tf.Session() as sess:
+    print sess.run([y, yhat, out])
   ### END YOUR CODE
   return out
 
