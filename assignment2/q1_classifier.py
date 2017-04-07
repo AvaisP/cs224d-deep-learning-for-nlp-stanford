@@ -149,7 +149,7 @@ class SoftmaxModel(Model):
       loss: A 0-d tensor (scalar)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    loss = cross_entropy_loss(self.labels_placeholder, pred)
     ### END YOUR CODE
     return loss
 
