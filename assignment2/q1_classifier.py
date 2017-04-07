@@ -131,7 +131,10 @@ class SoftmaxModel(Model):
       out: A tensor of shape (batch_size, n_classes)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    with tf.variable_scope("softmax", initializer=tf.random_normal_initializer()):
+      self.W = tf.get_variable("weights", [self.config.n_features, self.config.n_classes])
+      self.b = tf.get_variable("biases", [self.config.n_classes])
+    out = softmax(tf.matmul(input_data, self.W) + self.b)
     ### END YOUR CODE
     return out
 

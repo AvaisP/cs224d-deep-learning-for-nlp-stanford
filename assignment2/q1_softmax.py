@@ -25,8 +25,6 @@ def softmax(x):
   log_c = -tf.reduce_max(x, axis = x.get_shape().ndims - 1, keep_dims=True)
   out = tf.exp(x + log_c) / tf.reduce_sum(tf.exp(x + log_c), axis = 
                   x.get_shape().ndims - 1, keep_dims=True) 
-  with tf.Session() as sess:
-    print sess.run(out)
   ### END YOUR CODE
   
   return out 
@@ -55,8 +53,6 @@ def cross_entropy_loss(y, yhat):
   """
   ### YOUR CODE HERE
   out = -tf.reduce_sum(tf.to_float(y) * tf.log(yhat))
-  with tf.Session() as sess:
-    print sess.run([y, yhat, out])
   ### END YOUR CODE
   return out
 
