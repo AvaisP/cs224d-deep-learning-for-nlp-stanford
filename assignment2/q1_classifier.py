@@ -107,7 +107,7 @@ class SoftmaxModel(Model):
       train_op: The Op for training.
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    train_op = tf.train.AdamOptimizer().minimize(loss)
     ### END YOUR CODE
     return train_op
 
