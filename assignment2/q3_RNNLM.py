@@ -9,7 +9,7 @@ from utils import calculate_perplexity, get_ptb_dataset, Vocab
 from utils import ptb_iterator, sample
 
 import tensorflow as tf
-from tensorflow.python.ops.seq2seq import sequence_loss
+from tensorflow.contrib.seq2seq import sequence_loss
 from model import LanguageModel
 
 # Let's set the parameters of our model
@@ -79,7 +79,9 @@ class RNNLM_Model(LanguageModel):
     (Don't change the variable names)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    self.input_placeholder = tf.placeholder(tf.int32, shape=(None, self.config.num_steps))
+    self.labels_placeholder = tf.placeholder(tf.float32, shape=(None, self.config.num_steps))
+    self.dropout_placeholder = tf.placeholder(tf.float32)
     ### END YOUR CODE
   
   def add_embedding(self):
@@ -99,11 +101,17 @@ class RNNLM_Model(LanguageModel):
               a tensor of shape (batch_size, embed_size).
     """
     # The embedding lookup is currently only implemented for the CPU
+    self.L = tf.get_variable("embeddings",
+             [len(self.vocab), self.config.embed_size])
+
     with tf.device('/cpu:0'):
       ### YOUR CODE HERE
-      raise NotImplementedError
+      inputs = tf.nn.embedding_lookup(params=self.L, ids=self.input_placeholder)
+      ##TO BE REMOVED
+      embeddings_list = tf.split(inputs, self.config.num_steps, 1)
+      z = [tf.squeeze(item, squeeze_dims=(1,)) for item in embeddings_list]
       ### END YOUR CODE
-      return inputs
+      return z
 
   def add_projection(self, rnn_outputs):
     """Adds a projection layer.
@@ -125,8 +133,12 @@ class RNNLM_Model(LanguageModel):
                (batch_size, len(vocab)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
-    ### END YOUR CODE
+    self.U  = tf.get_variable("weightsU", [self.config.hidden_size, len(self.vocab)])
+    self.b2 = tf.get_variable("biases2", [len(self.vocab)])
+    outputs = []
+    for state in rnn_outputs:
+      output = tf.matmul(tf.nn.dropout(state, self.dropout_placeholder), self.U) + self.b2
+      outputs.append(output)
     return outputs
 
   def add_loss_op(self, output):
@@ -140,7 +152,15 @@ class RNNLM_Model(LanguageModel):
       loss: A 0-d tensor (scalar)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    # Not sure about this
+    # Copied from an example
+    print output.shape
+    return sequence_loss(logits=output,
+                         targets=tf.to_int32(tf.reshape(
+                             self.labels_placeholder,
+                             [self.config.batch_size * self.config.num_steps, -1])),
+                         weights=tf.ones(shape=(self.config.batch_size, self.config.num_steps))
+                         )
     ### END YOUR CODE
     return loss
 
@@ -164,7 +184,7 @@ class RNNLM_Model(LanguageModel):
       train_op: The Op for training.
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    train_op = tf.train.AdamOptimizer(self.config.lr).minimize(loss)
     ### END YOUR CODE
     return train_op
   
@@ -182,7 +202,11 @@ class RNNLM_Model(LanguageModel):
     self.predictions = [tf.nn.softmax(tf.cast(o, 'float64')) for o in self.outputs]
     # Reshape the output into len(vocab) sized chunks - the -1 says as many as
     # needed to evenly divide
-    output = tf.reshape(tf.concat(1, self.outputs), [-1, len(self.vocab)])
+    print self.outputs[0].shape
+    print len(self.outputs)
+    print tf.concat(self.outputs, 1).shape
+    output = tf.reshape(self.outputs, shape=(int(self.outputs[0].shape[0]), int(len(self.outputs)), 
+                                             int(self.outputs[0].shape[1])))
     self.calculate_loss = self.add_loss_op(output)
     self.train_step = self.add_training_op(self.calculate_loss)
 
@@ -226,7 +250,16 @@ class RNNLM_Model(LanguageModel):
                a tensor of shape (batch_size, hidden_size)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    self.H = tf.get_variable("time_steps_weight", [self.config.hidden_size, self.config.hidden_size])
+    self.I = tf.get_variable("embedded_weight", [self.config.embed_size, self.config.hidden_size])
+    self.b1 = tf.get_variable("biases1", [self.config.hidden_size])
+    self.initial_state = tf.zeros((self.config.batch_size, self.config.hidden_size))
+    state = self.initial_state
+    rnn_outputs = []
+    for step in xrange(self.config.num_steps):
+      state = tf.nn.sigmoid(tf.matmul(state, self.H) + tf.matmul(inputs[step], self.I) + self.b1)
+      rnn_outputs.append(state)
+    self.final_state = state
     ### END YOUR CODE
     return rnn_outputs
 
@@ -299,15 +332,15 @@ def generate_sentence(session, model, config, *args, **kwargs):
 
 def test_RNNLM():
   config = Config()
-  gen_config = deepcopy(config)
-  gen_config.batch_size = gen_config.num_steps = 1
+  #gen_config = deepcopy(config)
+  #gen_config.batch_size = gen_config.num_steps = 1
 
   # We create the training model and generative model
   with tf.variable_scope('RNNLM') as scope:
     model = RNNLM_Model(config)
     # This instructs gen_model to reuse the same variables as the model above
     scope.reuse_variables()
-    gen_model = RNNLM_Model(gen_config)
+    #gen_model = RNNLM_Model(gen_config)
 
   init = tf.initialize_all_variables()
   saver = tf.train.Saver()
